@@ -160,6 +160,7 @@ CONTEXT_MENU_LIST = [
         None,
         Actions.BUSSIFY_SOURCES,
         Actions.BUSSIFY_SINKS,
+        Actions.BLOCK_CONNECT_ALL,
     ]),
     Actions.BLOCK_PARAM_MODIFY
 ]

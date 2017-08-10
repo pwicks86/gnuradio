@@ -329,6 +329,10 @@ BLOCK_BYPASS = Action(
     stock_id=gtk.STOCK_MEDIA_FORWARD,
     keypresses=(gtk.keysyms.b, NO_MODS_MASK),
 )
+BLOCK_CONNECT_ALL = Action(
+    label='_Connect all blocks',
+    tooltip='Connect all blocks'
+)
 TOGGLE_SNAP_TO_GRID = ToggleAction(
     label='_Snap to grid',
     tooltip='Snap blocks to a grid for an easier connection alignment',

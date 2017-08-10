@@ -54,6 +54,7 @@ class FlowGraph(Element, _Flowgraph):
         self.element_moved = False
         self.mouse_pressed = False
         self._selected_elements = []
+        self._old_element = None
         self.press_coor = (0, 0)
         #selected ports
         self._old_selected_port = None
@@ -131,6 +132,7 @@ class FlowGraph(Element, _Flowgraph):
     def get_scroll_pane(self): return self.drawing_area.get_parent()
     def get_ctrl_mask(self): return self.drawing_area.ctrl_mask
     def get_mod1_mask(self): return self.drawing_area.mod1_mask
+    def get_shift_mask(self): return self.drawing_area.shift_mask
     def new_pixmap(self, *args): return self.get_drawing_area().new_pixmap(*args)
 
     def add_new_block(self, key, coor=None):
@@ -617,9 +619,17 @@ class FlowGraph(Element, _Flowgraph):
         Attempt to make a new connection if the old and ports are filled.
         If the control mask is set, merge with the current elements.
         """
+        # print("==================================================================")
+        # print("update_selected_elements")
+        # if self.mouse_pressed:
+        #     print("Mouse down")
+        # else:
+        #     print("Mouse up")
         selected_elements = None
         if self.mouse_pressed:
             new_selections = self.what_is_selected(self.get_coordinate())
+            # print("got new_selections")
+            # print(new_selections)
             #update the selections if the new selection is not in the current selections
             #allows us to move entire selected groups of elements
             if self.get_ctrl_mask() or not (
@@ -634,6 +644,8 @@ class FlowGraph(Element, _Flowgraph):
         else:  # called from a mouse release
             if not self.element_moved and (not self.get_selected_elements() or self.get_ctrl_mask()):
                 selected_elements = self.what_is_selected(self.get_coordinate(), self.press_coor)
+                # print("selected els")
+                # print(selected_elements)
         #this selection and the last were ports, try to connect them
         if self._old_selected_port and self._new_selected_port:
             try:
@@ -643,11 +655,71 @@ class FlowGraph(Element, _Flowgraph):
             self._old_selected_port = None
             self._new_selected_port = None
             return
+        print("Current selected elements: " + ",".join([e.get_name() for e in self.get_selected_elements()]))
+        if self.mouse_pressed:
+            if self.get_selected_elements() and len(self.get_selected_elements()) == 1 and self.get_selected_element().is_block:
+                print("still have one selected el")
+                # import pdb; pdb.set_trace()
+                # print("MOUSE PRESSED = " + str(self.mouse_pressed))
+                only_block = self.get_selected_element()
+                open_sources = [s for s in only_block.get_sources() if len(s.get_connections()) == 0]
+                open_sinks = []
+                if selected_elements:
+                    # print("selected elements was: " + ",".join([e.get_name() for e in selected_elements]))
+
+                    for el in selected_elements:
+                        if el.is_block:
+                            open_sinks.extend([sink for sink in el.get_sinks() if len(sink.get_connections()) == 0])
+                else:
+                    pass
+                    # print("selected elements was none")
+                # import pdb; pdb.set_trace()
+                
+                if self.get_shift_mask() and not self.get_ctrl_mask():
+                    # print("Open sources = " + ",".join([s.get_name() for s in open_sources]))
+                    # print("Open sinkcs = " + ",".join([s.get_name() for s in open_sinks]))
+                    if (len(open_sources) > 0 and len(open_sinks) > 0):
+                        # print("making connection")
+                        new_src = open_sources[0]
+                        new_sink = open_sinks[0]
+                        try:
+                            self.connect(new_src, new_sink)
+                            Actions.ELEMENT_CREATE()
+                        except:
+                            Messages.send_fail_connection()
+
+                    # print("Selected blocks: " + ",".join([b.get_name() for b in selected_elements]))
+                    # import pdb; pdb.set_trace()
+                    # print("YOU HAD SHIFT HELD DOWN")
+        else:
+            if self._old_element and self.get_shift_mask():
+                # print("Old element was " + self._old_element.get_name())
+                # import pdb; pdb.set_trace()
+                if selected_elements:
+                    old_sources = [s for s in self._old_element.get_sources() if len(s.get_connections()) == 0]
+                    if len(old_sources) > 0:
+                        old_source = old_sources[0]
+                        new_sinks = []
+                        for el in selected_elements:
+                            if el.is_block:
+                                new_sinks.extend([sink for sink in el.get_sinks() if len(sink.get_connections()) == 0])
+                        for sink in new_sinks:
+                            try:
+                                self.connect(old_source, sink)
+                                Actions.ELEMENT_CREATE()
+                            except:
+                                Messages.send_fail_connection()
+
         #update selected elements
         if selected_elements is None: return
         old_elements = set(self.get_selected_elements())
         self._selected_elements = list(set(selected_elements))
         new_elements = set(self.get_selected_elements())
+
+        if self.get_shift_mask() and self.mouse_pressed and len(old_elements) == 1:
+            self._old_element = next(iter(old_elements))
+        else:
+            self._old_elems = None
         #if ctrl, set the selected elements to the union - intersection of old and new
         if self.get_ctrl_mask():
             self._selected_elements = list(
