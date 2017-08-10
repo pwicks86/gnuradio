@@ -655,27 +655,28 @@ class FlowGraph(Element, _Flowgraph):
             self._old_selected_port = None
             self._new_selected_port = None
             return
-        print("Current selected elements: " + ",".join([e.get_name() for e in self.get_selected_elements()]))
-        if self.mouse_pressed:
-            if self.get_selected_elements() and len(self.get_selected_elements()) == 1 and self.get_selected_element().is_block:
-                print("still have one selected el")
-                # import pdb; pdb.set_trace()
-                # print("MOUSE PRESSED = " + str(self.mouse_pressed))
-                only_block = self.get_selected_element()
-                open_sources = [s for s in only_block.get_sources() if len(s.get_connections()) == 0]
-                open_sinks = []
-                if selected_elements:
-                    # print("selected elements was: " + ",".join([e.get_name() for e in selected_elements]))
+        print("Current selected blocks: " + ",".join([e.get_name() for e in self.get_selected_elements() if e.is_block]))
+        # 
+        if self.get_shift_mask() and not self.get_ctrl_mask():
+            if self.mouse_pressed:
+                if self.get_selected_elements() and len(self.get_selected_elements()) == 1 and self.get_selected_element().is_block:
+                    print("still have one selected el")
+                    # import pdb; pdb.set_trace()
+                    # print("MOUSE PRESSED = " + str(self.mouse_pressed))
+                    only_block = self.get_selected_element()
+                    open_sources = [s for s in only_block.get_sources() if len(s.get_connections()) == 0]
+                    open_sinks = []
+                    if selected_elements:
+                        # print("selected elements was: " + ",".join([e.get_name() for e in selected_elements]))
 
-                    for el in selected_elements:
-                        if el.is_block:
-                            open_sinks.extend([sink for sink in el.get_sinks() if len(sink.get_connections()) == 0])
-                else:
-                    pass
-                    # print("selected elements was none")
-                # import pdb; pdb.set_trace()
-                
-                if self.get_shift_mask() and not self.get_ctrl_mask():
+                        for el in selected_elements:
+                            if el.is_block:
+                                open_sinks.extend([sink for sink in el.get_sinks() if len(sink.get_connections()) == 0])
+                    else:
+                        pass
+                        # print("selected elements was none")
+                    # import pdb; pdb.set_trace()
+                    
                     # print("Open sources = " + ",".join([s.get_name() for s in open_sources]))
                     # print("Open sinkcs = " + ",".join([s.get_name() for s in open_sinks]))
                     if (len(open_sources) > 0 and len(open_sinks) > 0):
@@ -691,8 +692,7 @@ class FlowGraph(Element, _Flowgraph):
                     # print("Selected blocks: " + ",".join([b.get_name() for b in selected_elements]))
                     # import pdb; pdb.set_trace()
                     # print("YOU HAD SHIFT HELD DOWN")
-        else:
-            if self._old_element and self.get_shift_mask():
+            else:
                 # print("Old element was " + self._old_element.get_name())
                 # import pdb; pdb.set_trace()
                 if selected_elements:
