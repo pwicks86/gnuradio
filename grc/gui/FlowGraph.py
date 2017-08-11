@@ -655,46 +655,60 @@ class FlowGraph(Element, _Flowgraph):
             self._old_selected_port = None
             self._new_selected_port = None
             return
-        print("Current selected blocks: " + ",".join([e.get_name() for e in self.get_selected_elements() if e.is_block]))
-        # 
         if self.get_shift_mask() and not self.get_ctrl_mask():
             if self.mouse_pressed:
-                if self.get_selected_elements() and len(self.get_selected_elements()) == 1 and self.get_selected_element().is_block:
-                    print("still have one selected el")
-                    # import pdb; pdb.set_trace()
-                    # print("MOUSE PRESSED = " + str(self.mouse_pressed))
-                    only_block = self.get_selected_element()
-                    open_sources = [s for s in only_block.get_sources() if len(s.get_connections()) == 0]
+                # if there was already a single
+                # element selected that was a block
+                if self.get_selected_elements() and \
+                        len(self.get_selected_elements()) == 1 and \
+                        self.get_selected_element().is_block:
+
+                    only_block = self.get_selected_block()
+                    open_sources = [s for s in only_block.get_sources()
+                                    if len(s.get_connections()) == 0]
                     open_sinks = []
-                    if selected_elements:
-                        # print("selected elements was: " + ",".join([e.get_name() for e in selected_elements]))
+                    # if this was a mouse click on a new element
+                    # and it was also a single block
+                    if selected_elements and \
+                       len(selected_elements) == 1 and \
+                       selected_elements[0].is_block:
+                        newly_selected_block = selected_elements[0]
+                        open_sinks = [sink for sink 
+                                      in newly_selected_block.get_sinks
+                                      if len(sink.get_connections()) == 0]
 
-                        for el in selected_elements:
-                            if el.is_block:
-                                open_sinks.extend([sink for sink in el.get_sinks() if len(sink.get_connections()) == 0])
-                    else:
-                        pass
-                        # print("selected elements was none")
-                    # import pdb; pdb.set_trace()
-                    
-                    # print("Open sources = " + ",".join([s.get_name() for s in open_sources]))
-                    # print("Open sinkcs = " + ",".join([s.get_name() for s in open_sinks]))
+                    # if there are open sources and sinks
                     if (len(open_sources) > 0 and len(open_sinks) > 0):
-                        # print("making connection")
-                        new_src = open_sources[0]
-                        new_sink = open_sinks[0]
-                        try:
-                            self.connect(new_src, new_sink)
-                            Actions.ELEMENT_CREATE()
-                        except:
-                            Messages.send_fail_connection()
-
-                    # print("Selected blocks: " + ",".join([b.get_name() for b in selected_elements]))
-                    # import pdb; pdb.set_trace()
-                    # print("YOU HAD SHIFT HELD DOWN")
+                        source_domains = [s.get_domain()
+                                          for s in open_sources]
+                        sink_domains = [s.get_domain()
+                                        for s in open_sinks]
+                        # special case for len(open_sources) == len(open_sinks)
+                        if len(open_sources) == len(open_sinks) and \
+                                source_domains == sink_domains:
+                            # domains match, connect everything
+                            for (src, sink) in zip(
+                                    open_sources, open_sinks):
+                                try:
+                                    self.connect(src, sink)
+                                    Actions.ELEMENT_CREATE()
+                                except:
+                                    Messages.send_fail_connection()
+                        else:
+                            # Otherwise just connect the first
+                            # matching on each side
+                            new_src = open_sources[0]
+                            # grab the first open sink of the same domain
+                            new_sink = next(
+                                s for s in open_sinks
+                                if s.get_domain() == new_src.get_domain())
+                            if new_sink:
+                                try:
+                                    self.connect(new_src, new_sink)
+                                    Actions.ELEMENT_CREATE()
+                                except:
+                                    Messages.send_fail_connection()
             else:
-                # print("Old element was " + self._old_element.get_name())
-                # import pdb; pdb.set_trace()
                 if selected_elements:
                     old_sources = [s for s in self._old_element.get_sources() if len(s.get_connections()) == 0]
                     if len(old_sources) > 0:
