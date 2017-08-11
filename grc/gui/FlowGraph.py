@@ -709,14 +709,22 @@ class FlowGraph(Element, _Flowgraph):
                                 except:
                                     Messages.send_fail_connection()
             else:
+                # mouse up, so maybe the user dragged to select some elements
+                # in this case we try and connect the first open port on the
+                # old selection to every open port on the new selection
                 if selected_elements:
-                    old_sources = [s for s in self._old_element.get_sources() if len(s.get_connections()) == 0]
-                    if len(old_sources) > 0:
+                    old_sources = [s for s in self._old_element.get_sources()
+                                   if len(s.get_connections()) == 0]
+                    if old_sources:
                         old_source = old_sources[0]
+                        old_domain = old_source.get_domain()
                         new_sinks = []
                         for el in selected_elements:
                             if el.is_block:
-                                new_sinks.extend([sink for sink in el.get_sinks() if len(sink.get_connections()) == 0])
+                                new_sinks.extend(
+                                    [sink for sink in el.get_sinks()
+                                     if len(sink.get_connections()) == 0 and
+                                     sink.get_domain() == old_domain])
                         for sink in new_sinks:
                             try:
                                 self.connect(old_source, sink)
