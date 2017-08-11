@@ -673,9 +673,11 @@ class FlowGraph(Element, _Flowgraph):
                        len(selected_elements) == 1 and \
                        selected_elements[0].is_block:
                         newly_selected_block = selected_elements[0]
-                        open_sinks = [sink for sink 
-                                      in newly_selected_block.get_sinks
-                                      if len(sink.get_connections()) == 0]
+                        # get all unconnected sinks that aren't hidden
+                        open_sinks = [sink for sink
+                                      in newly_selected_block.get_sinks()
+                                      if len(sink.get_connections()) == 0 and
+                                      not sink.get_hide()]
 
                     # if there are open sources and sinks
                     if (len(open_sources) > 0 and len(open_sinks) > 0):
@@ -724,7 +726,8 @@ class FlowGraph(Element, _Flowgraph):
                                 new_sinks.extend(
                                     [sink for sink in el.get_sinks()
                                      if len(sink.get_connections()) == 0 and
-                                     sink.get_domain() == old_domain])
+                                     sink.get_domain() == old_domain and
+                                     not sink.get_hide()])
                         for sink in new_sinks:
                             try:
                                 self.connect(old_source, sink)
