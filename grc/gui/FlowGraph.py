@@ -728,12 +728,13 @@ class FlowGraph(Element, _Flowgraph):
                                      if len(sink.get_connections()) == 0 and
                                      sink.get_domain() == old_domain and
                                      not sink.get_hide()])
-                        for sink in new_sinks:
-                            try:
-                                self.connect(old_source, sink)
-                                Actions.ELEMENT_CREATE()
-                            except:
-                                Messages.send_fail_connection()
+                        if new_sinks:
+                            for sink in new_sinks:
+                                try:
+                                    self.connect(old_source, sink)
+                                except:
+                                    Messages.send_fail_connection()
+                            Actions.ELEMENT_CREATE()
 
         #update selected elements
         if selected_elements is None: return
