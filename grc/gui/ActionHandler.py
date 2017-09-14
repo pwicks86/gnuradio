@@ -379,28 +379,6 @@ class ActionHandler:
                 flow_graph_update()
                 page.get_state_cache().save_new_state(flow_graph.export_data())
                 page.set_saved(False)
-        elif action == Actions.BLOCK_CONNECT_ALL:
-            selected_blocks = flow_graph.get_selected_blocks()
-            block_sources = []
-            block_sinks = []
-            for block in selected_blocks:
-                block_sources.extend(
-                    [s for s in block.get_sources() 
-                     if len(s.get_connections()) == 0])
-                block_sinks.extend(
-                    [s for s in block.get_sinks() 
-                     if len(s.get_connections()) == 0])
-
-            def custom_key(block_port):
-                return block_port.get_coordinate() 
-            block_sources.sort(key=custom_key)            
-            block_sinks.sort(key=custom_key)            
-            for source, sink in zip(block_sources, block_sinks):
-                flow_graph.connect(source, sink)
-            Actions.ELEMENT_CREATE()
-            
-            # import pdb; pdb.set_trace()
-            # print("woo, connecting those blocks")
         ##################################################
         # Window stuff
         ##################################################
@@ -730,7 +708,6 @@ class ActionHandler:
         Actions.OPEN_HIER.set_sensitive(bool(selected_blocks))
         Actions.BUSSIFY_SOURCES.set_sensitive(bool(selected_blocks))
         Actions.BUSSIFY_SINKS.set_sensitive(bool(selected_blocks))
-        Actions.BLOCK_CONNECT_ALL.set_sensitive(bool(selected_blocks))
         Actions.RELOAD_BLOCKS.set_sensitive(True)
         Actions.FIND_BLOCKS.set_sensitive(True)
         #set the exec and stop buttons
