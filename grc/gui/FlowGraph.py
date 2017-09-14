@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 import functools
 import random
 from distutils.spawn import find_executable
-from itertools import chain, count
+from itertools import chain, count, product
 from operator import methodcaller
 
 import gobject
@@ -662,7 +662,6 @@ class FlowGraph(Element, _Flowgraph):
                 if self.get_selected_elements() and \
                         len(self.get_selected_elements()) == 1 and \
                         self.get_selected_element().is_block:
-
                     only_block = self.get_selected_block()
                     open_sources = [s for s in only_block.get_sources()
                                     if len(s.get_connections()) == 0]
@@ -699,17 +698,17 @@ class FlowGraph(Element, _Flowgraph):
                         else:
                             # Otherwise just connect the first
                             # matching on each side
-                            new_src = open_sources[0]
-                            # grab the first open sink of the same domain
-                            new_sink = next(
-                                s for s in open_sinks
-                                if s.get_domain() == new_src.get_domain())
-                            if new_sink:
-                                try:
-                                    self.connect(new_src, new_sink)
-                                    Actions.ELEMENT_CREATE()
-                                except:
-                                    Messages.send_fail_connection()
+                            print(open_sources)
+                            print(open_sinks)
+                            for (open_src, open_sink) in product(open_sources, open_sinks):
+                                if open_src.get_domain() == open_sink.get_domain():
+                                    try:
+                                        self.connect(open_src, open_sink)
+                                        Actions.ELEMENT_CREATE()
+                                    except Exception as e:
+                                        Messages.send_fail_connection()
+                                    finally:
+                                        break
             else:
                 # mouse up, so maybe the user dragged to select some elements
                 # in this case we try and connect the first open port on the
@@ -742,7 +741,8 @@ class FlowGraph(Element, _Flowgraph):
         self._selected_elements = list(set(selected_elements))
         new_elements = set(self.get_selected_elements())
 
-        if self.get_shift_mask() and self.mouse_pressed and len(old_elements) == 1:
+        if self.get_shift_mask() and \
+                self.mouse_pressed and len(old_elements) == 1:
             self._old_element = next(iter(old_elements))
         else:
             self._old_elems = None
