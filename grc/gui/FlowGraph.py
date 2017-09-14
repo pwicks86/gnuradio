@@ -619,17 +619,9 @@ class FlowGraph(Element, _Flowgraph):
         Attempt to make a new connection if the old and ports are filled.
         If the control mask is set, merge with the current elements.
         """
-        # print("==================================================================")
-        # print("update_selected_elements")
-        # if self.mouse_pressed:
-        #     print("Mouse down")
-        # else:
-        #     print("Mouse up")
         selected_elements = None
         if self.mouse_pressed:
             new_selections = self.what_is_selected(self.get_coordinate())
-            # print("got new_selections")
-            # print(new_selections)
             #update the selections if the new selection is not in the current selections
             #allows us to move entire selected groups of elements
             if self.get_ctrl_mask() or not (
@@ -644,8 +636,6 @@ class FlowGraph(Element, _Flowgraph):
         else:  # called from a mouse release
             if not self.element_moved and (not self.get_selected_elements() or self.get_ctrl_mask()):
                 selected_elements = self.what_is_selected(self.get_coordinate(), self.press_coor)
-                # print("selected els")
-                # print(selected_elements)
         #this selection and the last were ports, try to connect them
         if self._old_selected_port and self._new_selected_port:
             try:
@@ -698,8 +688,6 @@ class FlowGraph(Element, _Flowgraph):
                         else:
                             # Otherwise just connect the first
                             # matching on each side
-                            print(open_sources)
-                            print(open_sinks)
                             for (open_src, open_sink) in product(open_sources, open_sinks):
                                 if open_src.get_domain() == open_sink.get_domain():
                                     try:
@@ -744,8 +732,6 @@ class FlowGraph(Element, _Flowgraph):
         if self.get_shift_mask() and \
                 self.mouse_pressed and len(old_elements) == 1:
             self._old_element = next(iter(old_elements))
-        else:
-            self._old_elems = None
         #if ctrl, set the selected elements to the union - intersection of old and new
         if self.get_ctrl_mask():
             self._selected_elements = list(
